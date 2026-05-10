@@ -144,9 +144,9 @@ export default function GenerateStory() {
         return;
       }
 
-      if (!result.id) {
-        console.error("[GenerateStory] Response missing story ID:", result);
-        toast.error("Failed to generate story: Server did not return story ID");
+      if (typeof result.id !== "number" || result.id <= 0) {
+        console.error("[GenerateStory] Response missing or invalid story ID:", result);
+        toast.error("Failed to generate story: Server did not return valid story ID");
         return;
       }
 

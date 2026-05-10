@@ -136,7 +136,7 @@ export async function getStoryById(storyId: number) {
 }
 
 /**
- * Save a new story
+ * Save a new story and return its ID
  */
 export async function saveStory(story: InsertStory): Promise<number> {
   const db = await getDb();
@@ -145,8 +145,41 @@ export async function saveStory(story: InsertStory): Promise<number> {
   }
 
   try {
-    const result = await db.insert(stories).values(story);
-    return (result as any).insertId || 0;
+    // Insert the story
+    const insertResult = await db.insert(stories).values(story);
+    
+    // Drizzle MySQL2 insert result structure varies
+    // Try multiple ways to extract the insertId
+    let insertedId: number | undefined;
+    
+    if ((insertResult as any).insertId) {
+      insertedId = (insertResult as any).insertId;
+    } else if ((insertResult as any)[0]?.insertId) {
+      insertedId = (insertResult as any)[0].insertId;
+    } else if ((insertResult as any).lastInsertRowid) {
+      insertedId = (insertResult as any).lastInsertRowid;
+    }
+    
+    // If we still don't have a valid ID, query the database for the latest story
+    if (!insertedId || insertedId === 0) {
+      console.warn("[Database] Could not extract insertId from result, querying database");
+      const latestStory = await db
+        .select({ id: stories.id })
+        .from(stories)
+        .where(eq(stories.userId, story.userId))
+        .orderBy(desc(stories.createdAt))
+        .limit(1);
+      
+      if (latestStory.length > 0) {
+        insertedId = latestStory[0].id;
+      }
+    }
+    
+    if (!insertedId || insertedId === 0) {
+      throw new Error("Failed to retrieve inserted story ID from database");
+    }
+    
+    return insertedId;
   } catch (error) {
     console.error("[Database] Failed to save story:", error);
     throw error;
