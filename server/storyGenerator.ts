@@ -204,39 +204,57 @@ function extractContentText(content: string | Array<{ type: string; text?: strin
 }
 
 /**
- * Validate and parse JSON response from LLM
+ * Validate and parse JSON response from LLM with safe parsing
  */
 function parseStoryJSON(jsonString: string): GeneratedStory {
+  let parsed: unknown;
+  
   try {
-    const parsed = JSON.parse(jsonString);
+    parsed = JSON.parse(jsonString);
+  } catch (parseError) {
+    // Fallback: Try to extract JSON from the string if it's wrapped in text
+    const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch (retryError) {
+        throw new Error(`Failed to parse story JSON: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`);
+      }
+    } else {
+      throw new Error(`Failed to parse story JSON: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`);
+    }
+  }
+  
+  try {
 
     // Validate required fields
-    if (!parsed.title || typeof parsed.title !== "string") {
+    const p = parsed as any;
+    if (!p.title || typeof p.title !== "string") {
       throw new Error("Missing or invalid 'title' field");
     }
-    if (!parsed.hook || typeof parsed.hook !== "string") {
+    if (!p.hook || typeof p.hook !== "string") {
       throw new Error("Missing or invalid 'hook' field");
     }
-    if (!parsed.story || typeof parsed.story !== "string") {
+    if (!p.story || typeof p.story !== "string") {
       throw new Error("Missing or invalid 'story' field");
     }
-    if (!parsed.twistEnding || typeof parsed.twistEnding !== "string") {
+    if (!p.twistEnding || typeof p.twistEnding !== "string") {
       throw new Error("Missing or invalid 'twistEnding' field");
     }
-    if (!parsed.cta || typeof parsed.cta !== "string") {
+    if (!p.cta || typeof p.cta !== "string") {
       throw new Error("Missing or invalid 'cta' field");
     }
-    if (!Array.isArray(parsed.hashtags)) {
+    if (!Array.isArray(p.hashtags)) {
       throw new Error("Missing or invalid 'hashtags' field (must be array)");
     }
 
     return {
-      title: parsed.title,
-      hook: parsed.hook,
-      story: parsed.story,
-      twistEnding: parsed.twistEnding,
-      cta: parsed.cta,
-      hashtags: parsed.hashtags,
+      title: p.title,
+      hook: p.hook,
+      story: p.story,
+      twistEnding: p.twistEnding,
+      cta: p.cta,
+      hashtags: p.hashtags,
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown parsing error";

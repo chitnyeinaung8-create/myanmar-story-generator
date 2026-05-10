@@ -74,11 +74,22 @@ export const appRouter = router({
             coverImageUrl,
           });
 
-          return {
+          const response = {
             id: storyId,
             ...generatedStory,
             coverImageUrl,
           };
+
+          // Validate response structure before returning to ensure consistency
+          try {
+            const validated = validateStoryResponse(response);
+            return validated;
+          } catch (validationError) {
+            console.error("[Stories] Response validation failed:", validationError);
+            throw new Error(
+              `Invalid response structure: ${validationError instanceof Error ? validationError.message : "Unknown error"}`
+            );
+          }
         } catch (error) {
           const errorMsg = extractErrorMessage(error);
           console.error("[Stories] Failed to generate story:", errorMsg);
