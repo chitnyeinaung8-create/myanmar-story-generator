@@ -12,7 +12,7 @@ import StoryHistory from "./pages/StoryHistory";
 function Router() {
   return (
     <Switch>
-      <Route path="" component={Home} />
+      <Route path="/" component={Home} />
       <Route path="/generate" component={GenerateStory} />
       <Route path="/story/:id" component={StoryDisplay} />
       <Route path="/history" component={StoryHistory} />

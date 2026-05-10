@@ -69,7 +69,7 @@ const ENDING_TYPES = [
   "Bittersweet",
 ];
 
-export default function GenerateStory() {
+export default function GenerateStoryDebug() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
   const generateMutation = trpc.stories.generate.useMutation();
@@ -85,8 +85,6 @@ export default function GenerateStory() {
     endingType: "",
   });
 
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -98,55 +96,40 @@ export default function GenerateStory() {
     );
   }
 
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.storyType.trim()) {
-      errors.storyType = "Story type is required";
-    }
-    if (!formData.topic.trim()) {
-      errors.topic = "Topic is required";
-    }
-    if (!formData.tone.trim()) {
-      errors.tone = "Tone is required";
-    }
-    if (!formData.platform.trim()) {
-      errors.platform = "Platform is required";
-    }
-    if (!formData.endingType.trim()) {
-      errors.endingType = "Ending type is required";
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("[DEBUG] Form submit event triggered");
     e.preventDefault();
 
-    if (!validateForm()) {
-      const errorMessages = Object.values(validationErrors);
-      if (errorMessages.length > 0) {
-        toast.error(errorMessages[0]);
-      } else {
-        toast.error("Please fill in all required fields");
-      }
+    console.log("[DEBUG] Form data:", formData);
+
+    if (
+      !formData.storyType ||
+      !formData.topic ||
+      !formData.tone ||
+      !formData.platform ||
+      !formData.endingType
+    ) {
+      console.log("[DEBUG] Validation failed - missing required fields");
+      console.log("[DEBUG] storyType:", formData.storyType);
+      console.log("[DEBUG] topic:", formData.topic);
+      console.log("[DEBUG] tone:", formData.tone);
+      console.log("[DEBUG] platform:", formData.platform);
+      console.log("[DEBUG] endingType:", formData.endingType);
+      toast.error("Please fill in all required fields");
       return;
     }
 
+    console.log("[DEBUG] Validation passed - calling mutation");
     try {
+      console.log("[DEBUG] Calling generateMutation.mutateAsync with:", formData);
       const result = await generateMutation.mutateAsync(formData);
-      if (result && result.id) {
-        toast.success("Story generated successfully!");
-        setLocation(`/story/${result.id}`);
-      } else {
-        toast.error("Failed to generate story: Invalid response");
-      }
+      console.log("[DEBUG] Mutation succeeded, result:", result);
+      setLocation(`/story/${result.id}`);
     } catch (error) {
-      console.error("[GenerateStory] Error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to generate story. Please try again.";
-      toast.error(errorMessage);
+      console.error("[DEBUG] Mutation failed:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate story"
+      );
     }
   };
 
@@ -155,7 +138,7 @@ export default function GenerateStory() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-white mb-2">
-            Create Your Viral Story
+            Create Your Viral Story [DEBUG]
           </h1>
           <p className="text-slate-400">
             Generate cinematic, engaging Myanmar stories optimized for social media
@@ -166,15 +149,16 @@ export default function GenerateStory() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="storyType" className="text-white mb-2 block">
-                Story Type * {validationErrors.storyType && <span className="text-red-400 text-sm">({validationErrors.storyType})</span>}
+                Story Type *
               </Label>
               <Select
                 value={formData.storyType}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, storyType: value })
-                }
+                onValueChange={(value) => {
+                  console.log("[DEBUG] Story type changed to:", value);
+                  setFormData({ ...formData, storyType: value });
+                }}
               >
-                <SelectTrigger className={`bg-slate-800 border-slate-700 text-white ${validationErrors.storyType ? "border-red-500" : ""}`}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue placeholder="Select story type" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
@@ -189,30 +173,32 @@ export default function GenerateStory() {
 
             <div>
               <Label htmlFor="topic" className="text-white mb-2 block">
-                Topic * {validationErrors.topic && <span className="text-red-400 text-sm">({validationErrors.topic})</span>}
+                Topic *
               </Label>
               <Input
                 id="topic"
                 value={formData.topic}
-                onChange={(e) =>
-                  setFormData({ ...formData, topic: e.target.value })
-                }
+                onChange={(e) => {
+                  console.log("[DEBUG] Topic changed to:", e.target.value);
+                  setFormData({ ...formData, topic: e.target.value });
+                }}
                 placeholder="Enter story topic"
-                className={`bg-slate-800 border-slate-700 text-white placeholder-slate-500 ${validationErrors.topic ? "border-red-500" : ""}`}
+                className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
               />
             </div>
 
             <div>
               <Label htmlFor="tone" className="text-white mb-2 block">
-                Tone * {validationErrors.tone && <span className="text-red-400 text-sm">({validationErrors.tone})</span>}
+                Tone *
               </Label>
               <Select
                 value={formData.tone}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, tone: value })
-                }
+                onValueChange={(value) => {
+                  console.log("[DEBUG] Tone changed to:", value);
+                  setFormData({ ...formData, tone: value });
+                }}
               >
-                <SelectTrigger className={`bg-slate-800 border-slate-700 text-white ${validationErrors.tone ? "border-red-500" : ""}`}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
@@ -227,15 +213,16 @@ export default function GenerateStory() {
 
             <div>
               <Label htmlFor="platform" className="text-white mb-2 block">
-                Platform * {validationErrors.platform && <span className="text-red-400 text-sm">({validationErrors.platform})</span>}
+                Platform *
               </Label>
               <Select
                 value={formData.platform}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, platform: value })
-                }
+                onValueChange={(value) => {
+                  console.log("[DEBUG] Platform changed to:", value);
+                  setFormData({ ...formData, platform: value });
+                }}
               >
-                <SelectTrigger className={`bg-slate-800 border-slate-700 text-white ${validationErrors.platform ? "border-red-500" : ""}`}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
@@ -252,9 +239,10 @@ export default function GenerateStory() {
               <Label className="text-white mb-2 block">Length</Label>
               <RadioGroup
                 value={formData.length}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, length: value })
-                }
+                onValueChange={(value) => {
+                  console.log("[DEBUG] Length changed to:", value);
+                  setFormData({ ...formData, length: value });
+                }}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="SHORT" id="short" />
@@ -284,9 +272,10 @@ export default function GenerateStory() {
               <Input
                 id="location"
                 value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
+                onChange={(e) => {
+                  console.log("[DEBUG] Location changed to:", e.target.value);
+                  setFormData({ ...formData, location: e.target.value });
+                }}
                 placeholder="Enter location (optional)"
                 className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
               />
@@ -299,9 +288,10 @@ export default function GenerateStory() {
               <Textarea
                 id="characters"
                 value={formData.characters}
-                onChange={(e) =>
-                  setFormData({ ...formData, characters: e.target.value })
-                }
+                onChange={(e) => {
+                  console.log("[DEBUG] Characters changed to:", e.target.value);
+                  setFormData({ ...formData, characters: e.target.value });
+                }}
                 placeholder="Describe characters (optional)"
                 className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 min-h-24"
               />
@@ -309,15 +299,16 @@ export default function GenerateStory() {
 
             <div>
               <Label htmlFor="endingType" className="text-white mb-2 block">
-                Ending Type * {validationErrors.endingType && <span className="text-red-400 text-sm">({validationErrors.endingType})</span>}
+                Ending Type *
               </Label>
               <Select
                 value={formData.endingType}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, endingType: value })
-                }
+                onValueChange={(value) => {
+                  console.log("[DEBUG] Ending type changed to:", value);
+                  setFormData({ ...formData, endingType: value });
+                }}
               >
-                <SelectTrigger className={`bg-slate-800 border-slate-700 text-white ${validationErrors.endingType ? "border-red-500" : ""}`}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                   <SelectValue placeholder="Select ending type" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
@@ -334,7 +325,7 @@ export default function GenerateStory() {
               <Button
                 type="submit"
                 disabled={generateMutation.isPending}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-200"
               >
                 {generateMutation.isPending ? (
                   <>
