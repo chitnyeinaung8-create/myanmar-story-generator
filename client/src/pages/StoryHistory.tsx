@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { StoryHistorySkeleton } from "@/components/StorySkeleton";
 
 export default function StoryHistory() {
   const [, setLocation] = useLocation();
@@ -81,7 +82,7 @@ export default function StoryHistory() {
 
         {/* Stories Grid */}
         {storiesQuery.isLoading ? (
-          <div className="text-center text-slate-400">Loading stories...</div>
+          <StoryHistorySkeleton />
         ) : filteredStories.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 mb-4">

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { copyToClipboard } from "@/lib/clipboard";
+import { StorySkeleton } from "@/components/StorySkeleton";
 
 export default function StoryDisplay() {
   const { id } = useParams<{ id?: string }>();
@@ -43,8 +44,10 @@ export default function StoryDisplay() {
 
   if (storiesQuery.isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <div className="text-white">Loading story...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <StorySkeleton />
+        </div>
       </div>
     );
   }

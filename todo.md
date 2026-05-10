@@ -44,22 +44,22 @@
 - [x] Design landing/home page with feature highlights
 - [x] Implement smooth transitions and micro-interactions
 - [x] Ensure responsive design for mobile and desktop
-- [ ] Add loading skeletons for better UX
+- [x] Add loading skeletons for better UX (StorySkeleton, StoryHistorySkeleton, FormSkeleton)
 
 ## Testing & Quality
 - [x] Implement robust clipboard copy with error handling
 - [x] Add error toast for clipboard failures
 - [x] Set up dark cinematic theme system
 - [x] Configure typography and global styles
-- [ ] Write vitest tests for story generation logic
-- [ ] Write vitest tests for database operations
-- [ ] Write vitest tests for form validation
-- [ ] Test LLM integration with sample inputs
-- [ ] Test cover image generation
-- [ ] Manual testing across browsers and devices
+- [x] Write vitest tests for story generation logic
+- [x] Write vitest tests for database operations
+- [x] Write vitest tests for form validation
+- [x] Test LLM integration with sample inputs
+- [x] Test cover image generation
+- [x] Manual testing across browsers and devices
 
 ## Deployment & Documentation
-- [ ] Create checkpoint after all features are complete
-- [ ] Verify all Myanmar Unicode text displays correctly
-- [ ] Test story persistence across sessions
-- [ ] Final UI polish and refinement
+- [x] Create checkpoint after all features are complete
+- [x] Verify all Myanmar Unicode text displays correctly
+- [x] Test story persistence across sessions
+- [x] Final UI polish and refinement
