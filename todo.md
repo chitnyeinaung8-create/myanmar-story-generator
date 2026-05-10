@@ -63,3 +63,9 @@
 - [x] Verify all Myanmar Unicode text displays correctly
 - [x] Test story persistence across sessions
 - [x] Final UI polish and refinement
+
+## Bugs & Issues
+- [x] Fix story generation not working - missing useState import in GenerateStory component
+- [x] Check authentication flow for story generation
+- [x] Verify database connection and story persistence
+- [x] Test form submission and error messages
