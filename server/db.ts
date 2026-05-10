@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertStory, InsertUser, stories, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,86 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+/**
+ * Get all stories for a user, ordered by creation date (newest first)
+ */
+export async function getUserStories(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get stories: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(stories)
+      .where(eq(stories.userId, userId))
+      .orderBy(desc(stories.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get user stories:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a single story by ID
+ */
+export async function getStoryById(storyId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get story: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(stories)
+      .where(eq(stories.id, storyId))
+      .limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Failed to get story:", error);
+    throw error;
+  }
+}
+
+/**
+ * Save a new story
+ */
+export async function saveStory(story: InsertStory): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(stories).values(story);
+    return (result as any).insertId || 0;
+  } catch (error) {
+    console.error("[Database] Failed to save story:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a story by ID
+ */
+export async function deleteStory(storyId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db
+      .delete(stories)
+      .where(and(eq(stories.id, storyId), eq(stories.userId, userId)));
+    return (result as any).affectedRows > 0;
+  } catch (error) {
+    console.error("[Database] Failed to delete story:", error);
+    throw error;
+  }
+}

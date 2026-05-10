@@ -1,10 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
+import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { deleteStory, getUserStories, saveStory } from "./db";
+import { generateCoverImage } from "./coverImageGenerator";
+import { generateStory } from "./storyGenerator";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +20,94 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  stories: router({
+    generate: protectedProcedure
+      .input(
+        z.object({
+          storyType: z.string(),
+          topic: z.string(),
+          tone: z.string(),
+          platform: z.string(),
+          length: z.string(),
+          location: z.string(),
+          characters: z.string(),
+          endingType: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          // Generate story using LLM
+          const generatedStory = await generateStory(input);
+
+          // Generate cover image
+          let coverImageUrl = "";
+          try {
+            coverImageUrl = await generateCoverImage({
+              title: generatedStory.title,
+              storyType: input.storyType,
+              tone: input.tone,
+            });
+          } catch (error) {
+            console.warn("[Stories] Failed to generate cover image:", error);
+            // Continue without cover image
+          }
+
+          // Save story to database
+          const storyId = await saveStory({
+            userId: ctx.user.id,
+            title: generatedStory.title,
+            content: `${generatedStory.hook}\n\n${generatedStory.story}\n\n${generatedStory.twistEnding}\n\n${generatedStory.cta}`,
+            hook: generatedStory.hook,
+            story: generatedStory.story,
+            twistEnding: generatedStory.twistEnding,
+            cta: generatedStory.cta,
+            hashtags: generatedStory.hashtags.join(", "),
+            storyType: input.storyType,
+            tone: input.tone,
+            platform: input.platform,
+            length: input.length,
+            topic: input.topic,
+            location: input.location,
+            characters: input.characters,
+            endingType: input.endingType,
+            coverImageUrl,
+          });
+
+          return {
+            id: storyId,
+            ...generatedStory,
+            coverImageUrl,
+          };
+        } catch (error) {
+          console.error("[Stories] Failed to generate story:", error);
+          throw new Error(
+            `Failed to generate story: ${error instanceof Error ? error.message : "Unknown error"}`
+          );
+        }
+      }),
+
+    list: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        const stories = await getUserStories(ctx.user.id);
+        return stories;
+      } catch (error) {
+        console.error("[Stories] Failed to list stories:", error);
+        throw new Error("Failed to retrieve stories");
+      }
+    }),
+
+    delete: protectedProcedure
+      .input(z.object({ storyId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const success = await deleteStory(input.storyId, ctx.user.id);
+          return { success };
+        } catch (error) {
+          console.error("[Stories] Failed to delete story:", error);
+          throw new Error("Failed to delete story");
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
