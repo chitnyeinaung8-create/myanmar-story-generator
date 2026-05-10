@@ -185,6 +185,66 @@ function buildLengthGuidelines(length: string): string {
 }
 
 /**
+ * Extract text content from LLM response
+ * Handles both string and array formats
+ */
+function extractContentText(content: string | Array<{ type: string; text?: string }>): string {
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .filter((item) => item.type === "text" && item.text)
+      .map((item) => item.text || "")
+      .join("");
+  }
+
+  throw new Error("Invalid content format from LLM response");
+}
+
+/**
+ * Validate and parse JSON response from LLM
+ */
+function parseStoryJSON(jsonString: string): GeneratedStory {
+  try {
+    const parsed = JSON.parse(jsonString);
+
+    // Validate required fields
+    if (!parsed.title || typeof parsed.title !== "string") {
+      throw new Error("Missing or invalid 'title' field");
+    }
+    if (!parsed.hook || typeof parsed.hook !== "string") {
+      throw new Error("Missing or invalid 'hook' field");
+    }
+    if (!parsed.story || typeof parsed.story !== "string") {
+      throw new Error("Missing or invalid 'story' field");
+    }
+    if (!parsed.twistEnding || typeof parsed.twistEnding !== "string") {
+      throw new Error("Missing or invalid 'twistEnding' field");
+    }
+    if (!parsed.cta || typeof parsed.cta !== "string") {
+      throw new Error("Missing or invalid 'cta' field");
+    }
+    if (!Array.isArray(parsed.hashtags)) {
+      throw new Error("Missing or invalid 'hashtags' field (must be array)");
+    }
+
+    return {
+      title: parsed.title,
+      hook: parsed.hook,
+      story: parsed.story,
+      twistEnding: parsed.twistEnding,
+      cta: parsed.cta,
+      hashtags: parsed.hashtags,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown parsing error";
+    throw new Error(`Failed to parse story JSON: ${errorMsg}`);
+  }
+}
+
+/**
  * Generate a viral Myanmar story using LLM
  */
 export async function generateStory(
@@ -237,24 +297,42 @@ Create a viral Myanmar Unicode story following the specified genre rules, platfo
       },
     });
 
-    const content = response.choices[0]?.message.content;
-    if (!content || typeof content !== "string") {
-      throw new Error("No content in LLM response");
+    // STEP 1: Validate response structure
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error("LLM response has no choices");
     }
 
-    const parsed = JSON.parse(content);
-    return {
-      title: parsed.title,
-      hook: parsed.hook,
-      story: parsed.story,
-      twistEnding: parsed.twistEnding,
-      cta: parsed.cta,
-      hashtags: parsed.hashtags,
-    };
+    const choice = response.choices[0];
+    if (!choice || !choice.message) {
+      throw new Error("LLM response choice has no message");
+    }
+
+    // STEP 2: Extract content (handles both string and array formats)
+    const { content } = choice.message;
+    if (!content) {
+      throw new Error("LLM response message has no content");
+    }
+
+    let contentText: string;
+    try {
+      contentText = extractContentText(content);
+    } catch (error) {
+      throw new Error(
+        `Failed to extract content from LLM response: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+
+    if (!contentText || contentText.trim().length === 0) {
+      throw new Error("LLM response content is empty");
+    }
+
+    // STEP 3: Parse and validate JSON
+    const parsed = parseStoryJSON(contentText);
+
+    return parsed;
   } catch (error) {
-    console.error("[StoryGenerator] Failed to generate story:", error);
-    throw new Error(
-      `Failed to generate story: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error("[StoryGenerator] Failed to generate story:", errorMsg);
+    throw new Error(`Failed to generate story: ${errorMsg}`);
   }
 }

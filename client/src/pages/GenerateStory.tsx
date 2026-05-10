@@ -136,16 +136,43 @@ export default function GenerateStory() {
 
     try {
       const result = await generateMutation.mutateAsync(formData);
-      if (result && result.id) {
-        toast.success("Story generated successfully!");
-        setLocation(`/story/${result.id}`);
-      } else {
-        toast.error("Failed to generate story: Invalid response");
+      
+      // Validate response structure
+      if (!result) {
+        console.error("[GenerateStory] Empty response from server");
+        toast.error("Failed to generate story: Empty response from server");
+        return;
       }
+
+      if (!result.id) {
+        console.error("[GenerateStory] Response missing story ID:", result);
+        toast.error("Failed to generate story: Server did not return story ID");
+        return;
+      }
+
+      // Success
+      toast.success("Story generated successfully!");
+      setLocation(`/story/${result.id}`);
     } catch (error) {
-      console.error("[GenerateStory] Error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to generate story. Please try again.";
+      console.error("[GenerateStory] Mutation error:", error);
+      
+      // Extract meaningful error message
+      let errorMessage = "Failed to generate story. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null) {
+        const err = error as Record<string, unknown>;
+        if (err.message) {
+          errorMessage = String(err.message);
+        } else if (err.data && typeof err.data === "object") {
+          const data = err.data as Record<string, unknown>;
+          if (data.code) {
+            errorMessage = `Error: ${data.code}`;
+          }
+        }
+      }
+      
       toast.error(errorMessage);
     }
   };
