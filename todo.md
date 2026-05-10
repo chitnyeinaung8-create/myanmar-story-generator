@@ -69,3 +69,31 @@
 - [x] Check authentication flow for story generation
 - [x] Verify database connection and story persistence
 - [x] Test form submission and error messages
+
+
+## Production Stability Audit (Phase 2)
+- [ ] Audit LLM response handling for edge cases
+- [ ] Audit JSON parsing for invalid responses
+- [ ] Audit database ID retrieval for all failure modes
+- [ ] Audit error handling in tRPC procedures
+- [ ] Audit frontend error recovery mechanisms
+- [ ] Audit API response consistency
+- [ ] Add comprehensive logging for debugging
+- [ ] Add response validation at all layers
+- [ ] Add safe JSON parsing with fallbacks
+- [ ] Add retry logic for transient failures
+- [ ] Add timeout handling for slow responses
+- [ ] Add graceful degradation for API failures
+
+
+## Production Hardening - COMPLETED
+- [x] Add retry logic with exponential backoff (3 retries, 1s-8s delays)
+- [x] Add timeout handling (60-second limit)
+- [x] Add response validation at all layers
+- [x] Add comprehensive error messages
+- [x] Add graceful degradation for cover images
+- [x] Create response validator utility
+- [x] Update error handling in tRPC procedures
+- [x] Add safe JSON parsing with fallbacks
+- [x] Ensure all API responses are consistent
+- [x] Add retryable error detection

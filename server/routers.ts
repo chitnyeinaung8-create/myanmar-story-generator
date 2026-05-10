@@ -5,7 +5,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { deleteStory, getUserStories, saveStory } from "./db";
 import { generateCoverImage } from "./coverImageGenerator";
-import { generateStory } from "./storyGenerator";
+import { generateStoryProduction } from "./storyGeneratorProduction";
+import { validateStoryResponse, extractErrorMessage } from "./responseValidator";
 
 export const appRouter = router({
   system: systemRouter,
@@ -36,8 +37,8 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         try {
-          // Generate story using LLM
-          const generatedStory = await generateStory(input);
+          // Generate story using LLM (with retry and timeout)
+          const generatedStory = await generateStoryProduction(input);
 
           // Generate cover image
           let coverImageUrl = "";
@@ -79,10 +80,9 @@ export const appRouter = router({
             coverImageUrl,
           };
         } catch (error) {
-          console.error("[Stories] Failed to generate story:", error);
-          throw new Error(
-            `Failed to generate story: ${error instanceof Error ? error.message : "Unknown error"}`
-          );
+          const errorMsg = extractErrorMessage(error);
+          console.error("[Stories] Failed to generate story:", errorMsg);
+          throw new Error(`Failed to generate story: ${errorMsg}`);
         }
       }),
 
