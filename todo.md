@@ -107,3 +107,16 @@
 - [x] Add retry-after header handling
 - [x] Implement request queuing for rate-limited scenarios (via retry logic)
 - [x] Add quota status monitoring (via error detection)
+
+
+## Free Tier Migration - CRITICAL
+- [ ] Diagnose current LLM provider (Manus built-in vs external)
+- [ ] Check API quota and billing status
+- [ ] Evaluate free AI providers (Gemini, Groq, OpenRouter, Hugging Face)
+- [ ] Implement Gemini API free tier integration
+- [ ] Add fallback to Groq if Gemini fails
+- [ ] Optimize prompt to reduce token usage
+- [ ] Test story generation with free provider
+- [ ] Deploy to free hosting (Vercel, Railway, or Render)
+- [ ] Configure free tier API keys securely
+- [ ] Verify zero-cost deployment

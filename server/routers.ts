@@ -6,8 +6,10 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { deleteStory, getUserStories, saveStory } from "./db";
 import { generateCoverImage } from "./coverImageGenerator";
 import { generateStoryProduction } from "./storyGeneratorProduction";
+import { generateStoryFree } from "./storyGeneratorFree";
 import { validateStoryResponse, extractErrorMessage } from "./responseValidator";
 import { getUserFriendlyMessage, isQuotaExhausted } from "./apiErrorHandler";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   system: systemRouter,
@@ -38,8 +40,22 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         try {
-          // Generate story using LLM (with retry and timeout)
-          const generatedStory = await generateStoryProduction(input);
+          // Try free tier LLM first (Gemini + Groq fallback)
+          let generatedStory;
+          if (ENV.geminiApiKey || ENV.groqApiKey) {
+            try {
+              console.log("[Stories] Using free tier LLM (Gemini/Groq)");
+              generatedStory = await generateStoryFree(input);
+            } catch (freeError) {
+              console.warn("[Stories] Free tier LLM failed, falling back to Manus:", freeError);
+              // Fallback to Manus Forge API
+              generatedStory = await generateStoryProduction(input);
+            }
+          } else {
+            // No free tier keys, use Manus
+            console.log("[Stories] No free tier keys configured, using Manus LLM");
+            generatedStory = await generateStoryProduction(input);
+          }
 
           // Generate cover image
           let coverImageUrl = "";
