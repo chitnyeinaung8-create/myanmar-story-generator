@@ -1,4 +1,5 @@
 import { generateStory as baseGenerateStory, StoryGenerationInput, GeneratedStory } from "./storyGenerator";
+import { isQuotaExhausted, isRateLimited, getUserFriendlyMessage } from "./apiErrorHandler";
 
 /**
  * Production-hardened story generation with retry logic and timeout handling
@@ -27,6 +28,16 @@ async function withRetry<T>(
 
       // Don't retry on validation errors
       if (lastError.message.includes("Missing or invalid") || lastError.message.includes("parse")) {
+        throw lastError;
+      }
+
+      // Don't retry on quota exhaustion
+      if (isQuotaExhausted(error)) {
+        throw new Error(`Story generation failed: ${getUserFriendlyMessage(error)}`);
+      }
+
+      // Don't retry on authentication errors
+      if (lastError.message.includes("401") || lastError.message.includes("403") || lastError.message.includes("Authentication")) {
         throw lastError;
       }
 

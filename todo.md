@@ -97,3 +97,13 @@
 - [x] Add safe JSON parsing with fallbacks
 - [x] Ensure all API responses are consistent
 - [x] Add retryable error detection
+
+
+## API Rate Limiting & Quota Management - COMPLETED
+- [x] Detect 412 Precondition Failed (quota exhausted) errors
+- [x] Detect 429 Too Many Requests (rate limit) errors
+- [x] Show user-friendly error messages for quota exhaustion
+- [x] Show user-friendly error messages for rate limiting
+- [x] Add retry-after header handling
+- [x] Implement request queuing for rate-limited scenarios (via retry logic)
+- [x] Add quota status monitoring (via error detection)

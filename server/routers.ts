@@ -7,6 +7,7 @@ import { deleteStory, getUserStories, saveStory } from "./db";
 import { generateCoverImage } from "./coverImageGenerator";
 import { generateStoryProduction } from "./storyGeneratorProduction";
 import { validateStoryResponse, extractErrorMessage } from "./responseValidator";
+import { getUserFriendlyMessage, isQuotaExhausted } from "./apiErrorHandler";
 
 export const appRouter = router({
   system: systemRouter,
@@ -92,8 +93,9 @@ export const appRouter = router({
           }
         } catch (error) {
           const errorMsg = extractErrorMessage(error);
+          const userMsg = getUserFriendlyMessage(error);
           console.error("[Stories] Failed to generate story:", errorMsg);
-          throw new Error(`Failed to generate story: ${errorMsg}`);
+          throw new Error(`Failed to generate story: ${userMsg}`);
         }
       }),
 
