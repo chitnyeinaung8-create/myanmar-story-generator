@@ -63,7 +63,7 @@ async function callGeminiAPI(
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,7 +100,7 @@ async function callGeminiAPI(
 
     return {
       content,
-      model: "gemini-pro",
+      model: "gemini-2.5-flash",
       provider: "gemini",
       tokensUsed: data.usageMetadata?.totalTokenCount,
     };
@@ -136,7 +136,7 @@ async function callGroqAPI(
   }
 
   const payload = {
-    model: "mixtral-8x7b-32768", // Free tier model
+    model: "llama-3.3-70b-versatile", // Free tier model
     messages: messages.map((msg) => ({
       role: msg.role,
       content: msg.content,
@@ -172,7 +172,7 @@ async function callGroqAPI(
 
     return {
       content,
-      model: "mixtral-8x7b-32768",
+      model: "llama-3.3-70b-versatile",
       provider: "groq",
       tokensUsed: data.usage?.total_tokens,
     };
