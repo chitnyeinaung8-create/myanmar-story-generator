@@ -128,11 +128,12 @@
 
 
 ## Vercel Deployment - IN PROGRESS
-- [ ] Prepare project for Vercel (build config, dependencies)
-- [ ] Create vercel.json configuration
-- [ ] Optimize serverless functions for free tier
+- [x] Prepare project for Vercel (build config, dependencies)
+- [x] Create vercel.json configuration
+- [x] Create serverless tRPC API handler
+- [x] Test build locally
+- [ ] Set up free-tier database (Neon or Supabase)
 - [ ] Configure environment variables for production
-- [ ] Test build locally
+- [ ] Export to GitHub
 - [ ] Deploy to Vercel
-- [ ] Verify production deployment
-- [ ] Confirm free tier operation
+- [ ] Verify production deployment and provide live URL
