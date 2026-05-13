@@ -1,21 +1,44 @@
 import { and, desc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { InsertStory, InsertUser, stories, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { Pool } from "pg";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: Pool | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // Create a PostgreSQL connection pool for Neon
+      _pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 1, // Single connection for serverless
+      });
+      _db = drizzle(_pool);
+      console.log("[Database] Connected to PostgreSQL via Neon");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
+      _pool = null;
     }
   }
   return _db;
+}
+
+// Cleanup function for graceful shutdown
+export async function closeDb() {
+  if (_pool) {
+    try {
+      await _pool.end();
+      _db = null;
+      _pool = null;
+      console.log("[Database] Connection closed");
+    } catch (error) {
+      console.error("[Database] Error closing connection:", error);
+    }
+  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -68,9 +91,14 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    // PostgreSQL upsert using ON CONFLICT
+    await db
+      .insert(users)
+      .values(values)
+      .onConflictDoUpdate({
+        target: users.openId,
+        set: updateSet,
+      });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -145,41 +173,31 @@ export async function saveStory(story: InsertStory): Promise<number> {
   }
 
   try {
-    // Insert the story
-    const insertResult = await db.insert(stories).values(story);
+    // Insert the story and return the ID
+    const insertResult = await db
+      .insert(stories)
+      .values(story)
+      .returning({ id: stories.id });
     
-    // Drizzle MySQL2 insert result structure varies
-    // Try multiple ways to extract the insertId
-    let insertedId: number | undefined;
-    
-    if ((insertResult as any).insertId) {
-      insertedId = (insertResult as any).insertId;
-    } else if ((insertResult as any)[0]?.insertId) {
-      insertedId = (insertResult as any)[0].insertId;
-    } else if ((insertResult as any).lastInsertRowid) {
-      insertedId = (insertResult as any).lastInsertRowid;
+    // PostgreSQL with returning clause returns an array of objects
+    if (insertResult && insertResult.length > 0 && insertResult[0].id) {
+      return insertResult[0].id;
     }
     
-    // If we still don't have a valid ID, query the database for the latest story
-    if (!insertedId || insertedId === 0) {
-      console.warn("[Database] Could not extract insertId from result, querying database");
-      const latestStory = await db
-        .select({ id: stories.id })
-        .from(stories)
-        .where(eq(stories.userId, story.userId))
-        .orderBy(desc(stories.createdAt))
-        .limit(1);
-      
-      if (latestStory.length > 0) {
-        insertedId = latestStory[0].id;
-      }
+    // Fallback: query the database for the latest story
+    console.warn("[Database] Could not extract insertId from result, querying database");
+    const latestStory = await db
+      .select({ id: stories.id })
+      .from(stories)
+      .where(eq(stories.userId, story.userId))
+      .orderBy(desc(stories.createdAt))
+      .limit(1);
+    
+    if (latestStory.length > 0) {
+      return latestStory[0].id;
     }
     
-    if (!insertedId || insertedId === 0) {
-      throw new Error("Failed to retrieve inserted story ID from database");
-    }
-    
-    return insertedId;
+    throw new Error("Failed to retrieve inserted story ID from database");
   } catch (error) {
     console.error("[Database] Failed to save story:", error);
     throw error;
@@ -199,7 +217,9 @@ export async function deleteStory(storyId: number, userId: number): Promise<bool
     const result = await db
       .delete(stories)
       .where(and(eq(stories.id, storyId), eq(stories.userId, userId)));
-    return (result as any).affectedRows > 0;
+    
+    // PostgreSQL delete returns the number of affected rows
+    return (result as any) > 0;
   } catch (error) {
     console.error("[Database] Failed to delete story:", error);
     throw error;

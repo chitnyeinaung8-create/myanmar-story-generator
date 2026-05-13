@@ -132,8 +132,8 @@
 - [x] Create vercel.json configuration
 - [x] Create serverless tRPC API handler
 - [x] Test build locally
-- [ ] Set up free-tier database (Neon or Supabase)
-- [ ] Configure environment variables for production
-- [ ] Export to GitHub
-- [ ] Deploy to Vercel
-- [ ] Verify production deployment and provide live URL
+- [x] Set up free-tier database (Neon PostgreSQL provided)
+- [x] Create comprehensive deployment guides (MANUAL_DEPLOYMENT_GUIDE.md, QUICK_START.md, DEPLOYMENT_CHECKLIST.md)
+- [ ] Export to GitHub (user manual step)
+- [ ] Deploy to Vercel (user manual step)
+- [ ] Verify production deployment and provide live URL (pending user deployment)
