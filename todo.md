@@ -125,3 +125,14 @@
 - [ ] Deploy to free hosting platform (Vercel, Railway, or Render)
 - [ ] Verify end-to-end story generation on deployed free host
 - [ ] Confirm zero-cost operation (no Manus LLM charges)
+
+
+## Vercel Deployment - IN PROGRESS
+- [ ] Prepare project for Vercel (build config, dependencies)
+- [ ] Create vercel.json configuration
+- [ ] Optimize serverless functions for free tier
+- [ ] Configure environment variables for production
+- [ ] Test build locally
+- [ ] Deploy to Vercel
+- [ ] Verify production deployment
+- [ ] Confirm free tier operation
